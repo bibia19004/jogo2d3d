@@ -2,6 +2,9 @@ const canvas = document.getElementById('jogo2D')
 const ctx = canvas.getContext('2d')
 let gameOver = false
 
+const obstaculos = [];
+let frameCount = 0;
+
 document.addEventListener('keypress', (e) => {
     if(e.code == 'Space' && personagem.pulando == false && !gameOver) {
         console.log('clicou para pular')
@@ -15,20 +18,28 @@ class Entidade {
     constructor (x, y, largura, altura){
         this.x = x;
         this.y = y;
-        this.largura = largura;
-        this.altura = altura;
+        this._largura = largura;
+        this._altura = altura;
         this.#gravidade = 0.5
     }
     get gravidade(){
         return this.#gravidade
     }
 
+    get largura() {
+        return this._largura;
+    }
+
+    get altura() {
+        return this._altura;
+    }
+
     desenhar = function (cor){
-            ctx.fillStyle = cor
-            ctx.fillRect(this.x, this.y, this.largura, this.altura)
-        
+        ctx.fillStyle = cor
+        ctx.fillRect(this.x, this.y, this.largura, this.altura)
     }
 }
+
 class Personagem extends Entidade{
     #pulando
     #velocidadey 
@@ -66,21 +77,63 @@ class Personagem extends Entidade{
         }
     }
 }
+
 class Obstaculo extends Entidade{
     constructor (x, y, largura, altura){
         super(x, y, largura, altura)
     }
+    atualizarObstaculo() {
+        this.x -= 5;
+    }
 }
+
 const personagem = new Personagem (100, canvas.height - 50, 50 ,50)
 
+function gerarObstaculo() {
+    const obstaculo = new Obstaculo(canvas.width, canvas.height - 50, 30, 50);
+    obstaculos.push(obstaculo);
+}
+
+function detectarColisao(obstaculo) {
+    return (
+        personagem.x < obstaculo.x + obstaculo.largura &&
+        personagem.x + personagem.largura > obstaculo.x &&
+        personagem.y < obstaculo.y + obstaculo.altura &&
+        personagem.y + personagem.altura > obstaculo.y
+    );
+}
+
+function atualizarObstaculos() {
+    for (let i = obstaculos.length - 1; i >= 0; i--) {
+        obstaculos[i].atualizarObstaculo();
+        obstaculos[i].desenhar('Red');
+
+        if (detectarColisao(obstaculos[i])) {
+            gameOver = true;
+            alert('Game Over!');
+            return;
+        }
+
+        if (obstaculos[i].x + obstaculos[i].largura < 0) {
+            obstaculos.splice(i, 1);
+        }
+    }
+}
 
 function loop () {
-    if (gameOver == false) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!gameOver) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         personagem.desenhar('Black')
-        personagem.atualizarPersonagem()        
+        personagem.atualizarPersonagem()
+        atualizarObstaculos();
+
+        frameCount++;
+        if (frameCount % 100 === 0) {
+            gerarObstaculo();
+        }
+
         requestAnimationFrame(loop);
     }
 }
 
-loop()
+loop();
