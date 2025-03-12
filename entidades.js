@@ -3,10 +3,9 @@ const ctx = canvas.getContext('2d')
 let gameOver = false
 
 document.addEventListener('keypress', (e) => {
-    if(e.code == 'Space' && Personagem.pulando == false && gameOver) {
+    if(e.code == 'Space' && personagem.pulando == false && !gameOver) {
         console.log('clicou para pular')
-        Personagem.velocidadey = 15
-        Personagem.pulando = true
+        personagem.saltar()
     }
 })
 
@@ -31,13 +30,45 @@ class Entidade {
     }
 }
 class Personagem extends Entidade{
+    #pulando
+    #velocidadey 
     constructor(x, y, largura, altura){
-        super(x, y, largura, altura)
+        super(x, y, largura, altura) 
+        this.#pulando= false
+        this.#velocidadey = 0
+    }
+    saltar = function (){
+        this.#velocidadey = 15
+        this.#pulando = true
+        console.log('saltou')
+    }
+    get pulando () {
+        return this.#pulando
+    }
+    set pulando (valor) {
+        this.#pulando = valor
+    }
+    get velocidadey () {
+        return this.#velocidadey
+    }
+    set velocidadey (valor) {
+        this.#velocidadey = valor
+    }
+    atualizarPersonagem = function () {
+        if (this.pulando) {
+            this.velocidadey -= this.gravidade
+            this.y -= this.velocidadey
+            if (this.y >= canvas.height-50) {
+                this.velocidadey = 0
+                this.pulando = false
+                this.y = canvas.height-50
+            }
+        }
     }
 }
 class Obstaculo extends Entidade{
     constructor (x, y, largura, altura){
-        super(x,y, largura, altura)
+        super(x, y, largura, altura)
     }
 }
 const personagem = new Personagem (100, canvas.height - 50, 50 ,50)
@@ -47,16 +78,9 @@ function loop () {
     if (gameOver == false) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
         personagem.desenhar('Black')
-        //desenharObstaculo();
-        //atualizarPersonagem();
-        //atualizarObstaculo();
-        //detectarColisao();
-        //requestAnimationFrame(loop);
+        personagem.atualizarPersonagem()        
         requestAnimationFrame(loop);
     }
 }
 
-loop();
-
-const x = new Entidade(10,20,30,50)
-console.log(x.gravidade)
+loop()
