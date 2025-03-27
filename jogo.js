@@ -1,16 +1,23 @@
 // Pegar o elemento canvas pelo id
 const canvas = document.getElementById('jogo2D');
-// Inicializar o canvas
 const ctx = canvas.getContext('2d');
-const gravidade = 0.4;
+const gravidade = 0.3;
 let gameOver = false;
+
+// Carregar imagem de fundo
+const fundo = new Image();
+fundo.src = 'https://st4.depositphotos.com/8692642/25395/i/450/depositphotos_253959628-stock-photo-pink-glitter-texture-abstract-background.jpg';
+
+// Carregar imagem do personagem
+const personagemImg = new Image();
+personagemImg.src = 'https://www.imagenspng.com.br/wp-content/uploads/2023/07/barbie-png-17.png';
 
 // Objeto do personagem
 const personagem = {
     x: 100,
-    y: canvas.height - 50,
-    altura: 50,
-    largura: 50,
+    y: canvas.height - 130,
+    largura: 100,  // Aumentado para 80px
+    altura: 130,  // Aumentado para 130px
     velocidadey: 0,
     pulando: false
 };
@@ -24,32 +31,16 @@ const obstaculo = {
     velocidadex: 3
 };
 
-// Função de reiniciar o jogo
-function reiniciarJogo() {
-    personagem.x = 100;
-    personagem.y = canvas.height - 50;
-    personagem.velocidadey = 0;
-    personagem.pulando = false;
+// Variáveis de pontuação
+let pontos = 0;
+let maiorPontuacao = 0;
 
-    obstaculo.x = canvas.width - 50;
-    obstaculo.y = canvas.height - 100;
-    obstaculo.largura = 50;
-    obstaculo.altura = 100;
-    obstaculo.velocidadex = 3;
-
-    gameOver = false;
-    loop();  // Iniciar o loop de animação
-}
-
-// Adicionar evento de tecla pressionada
+// Evento de tecla pressionada
 document.addEventListener('keypress', (e) => {
     if (e.code == 'Space') {
         if (gameOver) {
-            // Reiniciar o jogo ao pressionar 'espaço' após Game Over
             reiniciarJogo();
-        } else if (personagem.pulando == false) {
-            // Fazer o personagem pular
-            console.log('clicou para pular');
+        } else if (!personagem.pulando) {
             personagem.velocidadey = 15;
             personagem.pulando = true;
         }
@@ -58,8 +49,7 @@ document.addEventListener('keypress', (e) => {
 
 // Funções do personagem
 function desenharPersonagem() {
-    ctx.fillStyle = 'magenta';
-    ctx.fillRect(personagem.x, personagem.y, personagem.largura, personagem.altura);
+    ctx.drawImage(personagemImg, personagem.x, personagem.y, personagem.largura, personagem.altura);
 }
 
 function atualizarPersonagem() {
@@ -76,29 +66,21 @@ function atualizarPersonagem() {
 
 // Funções do obstáculo
 function desenharObstaculo() {
-    ctx.fillStyle = 'red';
+    ctx.fillStyle = 'rgb(156, 48, 66)';
     ctx.fillRect(obstaculo.x, obstaculo.y, obstaculo.largura, obstaculo.altura);
 }
 
 function atualizarObstaculo() {
     obstaculo.x -= obstaculo.velocidadex;
-    if (obstaculo.x <= 0 - obstaculo.largura) {
+    if (obstaculo.x <= -obstaculo.largura) {
         obstaculo.x = canvas.width;
-        obstaculo.velocidadex += 0.2;
+        obstaculo.velocidadex += 0.01;
         let nova_altura = (Math.random() * 50) + 100;
         obstaculo.altura = nova_altura;
         obstaculo.y = canvas.height - nova_altura;
+        pontos++;
     }
 }
-
-// Função para detectar colisão
-// ...existing code...
-
-// Variável para armazenar a pontuação
-// Variável para armazenar a pontuação
-let pontos = 0;
-// Variável para armazenar a maior pontuação
-let maiorPontuacao = 0;
 
 // Função para detectar colisão
 function detectarColisao() {
@@ -109,21 +91,15 @@ function detectarColisao() {
         personagem.y + personagem.altura > obstaculo.y
     ) {
         gameOver = true;
-        // Atualiza a maior pontuação se a pontuação atual for maior
         if (pontos > maiorPontuacao) {
             maiorPontuacao = pontos;
         }
-    } else if (personagem.x > obstaculo.x + obstaculo.largura) {
-        // Incrementa a pontuação se o personagem passar o obstáculo
-        pontos++;
-        // Move o obstáculo para fora da tela para ser reposicionado
-        obstaculo.x = -obstaculo.largura;
     }
 }
 
 // Função para mostrar "Game Over"
 function mostrarGameOver() {
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'rgb(241, 95, 120)';
     ctx.font = '50px Arial';
     ctx.fillText('GAME OVER', canvas.width / 2 - 150, canvas.height / 2);
     ctx.font = '30px Arial';
@@ -132,7 +108,7 @@ function mostrarGameOver() {
 
 // Função para mostrar a pontuação
 function mostrarPontos() {
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'rgb(241, 95, 120)';
     ctx.font = '20px Arial';
     ctx.fillText('Pontos: ' + pontos, 10, 20);
     ctx.fillText('Maior Pontuação: ' + maiorPontuacao, 10, 50);
@@ -142,13 +118,16 @@ function mostrarPontos() {
 function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Desenhar o fundo
+    ctx.drawImage(fundo, 0, 0, canvas.width, canvas.height);
+
     if (!gameOver) {
         desenharPersonagem();
         desenharObstaculo();
         atualizarPersonagem();
         atualizarObstaculo();
         detectarColisao();
-        mostrarPontos(); // Mostrar a pontuação
+        mostrarPontos();
     } else {
         mostrarGameOver();
     }
@@ -164,5 +143,7 @@ function reiniciarJogo() {
     loop();
 }
 
-// Iniciar o jogo chamando a função loop ao carregar a página
-reiniciarJogo();
+// Iniciar o jogo quando as imagens forem carregadas
+fundo.onload = personagemImg.onload = function () {
+    reiniciarJogo();
+};
